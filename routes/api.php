@@ -9,8 +9,13 @@ Route::post('/register', [AuthController::class, 'register']);
 
 Route::middleware('throttle:5,1')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
+
     Route::post('/password/email', [AuthController::class, 'sendPasswordResetLink']);
-    Route::post('/password/reset', action: [AuthController::class, 'resetPassword']);
+    Route::post('/password/reset', action: [AuthController::class, 'resetPassword'])->name('password.update');
+    Route::get('/password/reset', function () {
+        return view('reset-password'); // Make sure this file exists in resources/views/auth/
+    })->name('password.reset');
+
     Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify.api');
 });
 

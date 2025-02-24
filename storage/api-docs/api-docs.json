@@ -1,0 +1,1550 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "News Aggregator API",
+        "description": "A RESTful API for managing news articles and user preferences, built with Laravel 11, Sanctum authentication, Redis caching, and rate limiting (60 requests/minute per IP).",
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/articles": {
+            "get": {
+                "tags": [
+                    "Articles"
+                ],
+                "summary": "Retrieve a list of articles",
+                "description": "Returns a paginated list of articles with optional filters for keyword, date, category, and source.",
+                "operationId": "d87f751e8f428fb968c2791aa22f017e",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of articles per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "example": 10
+                        }
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Search keyword to filter articles by title, content, or summary",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "AI"
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "description": "Filter by publication date (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2025-02-23"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "description": "Filter by article category",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "sports"
+                        }
+                    },
+                    {
+                        "name": "source",
+                        "in": "query",
+                        "description": "Filter by article source",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Gazette"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Articles retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Articles retrieved successfully"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "provider": {
+                                                                "type": "string",
+                                                                "example": "NewsData.Io"
+                                                            },
+                                                            "category": {
+                                                                "type": "string",
+                                                                "example": "sports"
+                                                            },
+                                                            "source": {
+                                                                "type": "string",
+                                                                "example": "Gazette"
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "Colorado Springs pet related information and events starting Feb. 22"
+                                                            },
+                                                            "content": {
+                                                                "type": "string",
+                                                                "example": "ONLY AVAILABLE IN PAID PLANS"
+                                                            },
+                                                            "summary": {
+                                                                "type": "string",
+                                                                "example": "Pet related information and events in and around the Colorado Springs area"
+                                                            },
+                                                            "author": {
+                                                                "type": "string",
+                                                                "example": "BY CARLOTTA OLSON The Gazette"
+                                                            },
+                                                            "article_url": {
+                                                                "type": "string",
+                                                                "example": "https://gazette.com/events-calendars/..."
+                                                            },
+                                                            "image_url": {
+                                                                "type": "string",
+                                                                "example": "https://bloximages.newyork1.vip.townnews.com/..."
+                                                            },
+                                                            "published_at": {
+                                                                "type": "string",
+                                                                "example": "2025-02-22"
+                                                            },
+                                                            "x_id": {
+                                                                "type": "string",
+                                                                "example": "ME4PbazW6OVB"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "first_page_url": {
+                                                    "type": "string",
+                                                    "example": "http://127.0.0.1:8000/api/articles?page=1"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page_url": {
+                                                    "type": "string",
+                                                    "example": "http://127.0.0.1:8000/api/articles?page=1"
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": "string",
+                                                                "example": null,
+                                                                "nullable": true
+                                                            },
+                                                            "label": {
+                                                                "type": "string",
+                                                                "example": "&laquo; Previous"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean",
+                                                                "example": false
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "next_page_url": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "path": {
+                                                    "type": "string",
+                                                    "example": "http://127.0.0.1:8000/api/articles"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "prev_page_url": {
+                                                    "type": "string",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": null,
+                                                    "nullable": true
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized: Invalid or expired token."
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Too many requests. Please try again later."
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 429
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/article": {
+            "get": {
+                "tags": [
+                    "Articles"
+                ],
+                "summary": "Retrieve a single article",
+                "description": "Returns details of a specific article identified by its hashed ID, cached for 30 minutes.",
+                "operationId": "1371cd262d648211e31871014c7f1920",
+                "parameters": [
+                    {
+                        "name": "hashed_id",
+                        "in": "query",
+                        "description": "Hashed ID of the article",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "G0XAW57BqoDY"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Article retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Article details retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "provider": {
+                                                    "type": "string",
+                                                    "example": "NewsData.Io"
+                                                },
+                                                "category": {
+                                                    "type": "string",
+                                                    "example": "sports"
+                                                },
+                                                "source": {
+                                                    "type": "string",
+                                                    "example": "Yahoo! News"
+                                                },
+                                                "title": {
+                                                    "type": "string",
+                                                    "example": "Nicole Kidman Believes Gender Parity in Hollywood Only Comes From \\u2018Actually Being in the Films of Women\\u2019"
+                                                },
+                                                "content": {
+                                                    "type": "string",
+                                                    "example": "ONLY AVAILABLE IN PAID PLANS"
+                                                },
+                                                "summary": {
+                                                    "type": "string",
+                                                    "example": "In 2017, Kidman vowed to work with a female director every 18 months and has since exceeded that quota."
+                                                },
+                                                "author": {
+                                                    "type": "string",
+                                                    "example": "Indiewire"
+                                                },
+                                                "article_url": {
+                                                    "type": "string",
+                                                    "example": "https://ca.news.yahoo.com/nicole-kidman-believes-gender-parity-200000063.html"
+                                                },
+                                                "image_url": {
+                                                    "type": "string",
+                                                    "example": "https://s.yimg.com/ny/api/res/1.2/WW.4xO2adhm6X4hilegfNw--/YXBwaWQ9aGlnaGxhbmRlcjt3PTEyMDA7aD04MDA-/https://media.zenfs.com/en/indiewire_268/d931154b95d796643ddcc2033b241986"
+                                                },
+                                                "published_at": {
+                                                    "type": "string",
+                                                    "example": "2025-02-22"
+                                                },
+                                                "x_id": {
+                                                    "type": "string",
+                                                    "example": "G0XAW57BqoDY"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Missing article ID",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Article id is required."
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 400
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Invalid or not found article",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid or malformed article id."
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 404
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized: Invalid or expired token."
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/register": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Register a new user",
+                "operationId": "8a56853624e025573120a09a4c75d468",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "description": "The user's full name",
+                                        "type": "string",
+                                        "example": "John Doe"
+                                    },
+                                    "email": {
+                                        "description": "The user's email address",
+                                        "type": "string",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "description": "The user's password (min 8 characters)",
+                                        "type": "string",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User registered successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User registered successfully. Please verify your email to log in."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "access_token": {
+                                                    "type": "string",
+                                                    "example": "eKjFIGj3VfXcZXxdKY3iSnj3bxTlxvGLB"
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "Bearer"
+                                                },
+                                                "user": {
+                                                    "properties": {
+                                                        "x_id": {
+                                                            "type": "string",
+                                                            "example": "jmxVbpG"
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "John Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "john@example.com"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 201
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bad request"
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 400
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed.(note: Each field returns only one error message at a time, showing possible validation errors for the given fields.)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "email": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": [
+                                                            "The email has already been taken.",
+                                                            "The email must be a valid email address."
+                                                        ]
+                                                    }
+                                                },
+                                                "name": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": [
+                                                            "The name field is required.",
+                                                            "The name must not exceed 255 characters."
+                                                        ]
+                                                    }
+                                                },
+                                                "password": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": [
+                                                            "The password must be at least 8 characters.",
+                                                            "The password must contain at least one uppercase letter.",
+                                                            "The password must contain at least one number.",
+                                                            "The password must contain at least one special character."
+                                                        ]
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 422
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Too many requests. Please try again later."
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 429
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "An error occurred: <error-message>"
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 500
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Log in a user",
+                "operationId": "a3b306d14572d1f4bd6c064b3233e7b8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "email": {
+                                        "description": "The user's email address",
+                                        "type": "string",
+                                        "example": "john@example.com"
+                                    },
+                                    "password": {
+                                        "description": "The user's password",
+                                        "type": "string",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Login successful",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Login successful"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "access_token": {
+                                                    "type": "string",
+                                                    "example": "1|eKjFIGj3VfXcZXxdKY3iSnj3bxTlxvGLB"
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "Bearer"
+                                                },
+                                                "expires_at": {
+                                                    "type": "string",
+                                                    "format": "datetime",
+                                                    "example": "2024-02-24T12:00:00Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The provided credentials are incorrect."
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Email not verified",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Please verify your email address before logging in."
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 403
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Log out a user",
+                "operationId": "fe8f3429cd6979b3b4517e186505f9f9",
+                "responses": {
+                    "200": {
+                        "description": "Logged out successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logged out successfully"
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User not authenticated"
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/password/reset": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Generate a password reset token",
+                "description": "This endpoint generates a password reset token for a given email address. The token can be used to reset the user's password.",
+                "operationId": "afa7f78e76943c35ac29f5ad58681110",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "description": "The email address of the user requesting a password reset.",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset token generated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password reset token generated. Use this token to reset your password."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "reset_token": {
+                                                    "type": "string",
+                                                    "example": "abcdef123456"
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "format": "email",
+                                                    "example": "user@example.com"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No user found with this email address.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 404
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No user found with this email address."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 422
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The email field is required."
+                                        },
+                                        "errors": {
+                                            "properties": {
+                                                "email": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The email must be a valid email address."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/preferences": {
+            "get": {
+                "tags": [
+                    "Preferences"
+                ],
+                "summary": "Retrieve user preferences",
+                "description": "Returns the authenticated user's preferences, cached for 15 minutes. If no preferences are set, 'data' will be null.",
+                "operationId": "110d923e543e89f784b93e143ae4825a",
+                "responses": {
+                    "200": {
+                        "description": "Preferences retrieved successfully or no preferences set yet",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "description": "Will be 'Preferences retrieved successfully' if preferences exist, or 'No preferences set yet' if none exist",
+                                            "type": "string",
+                                            "example": "Preferences retrieved successfully"
+                                        },
+                                        "data": {
+                                            "description": "User preferences if set, otherwise null",
+                                            "properties": {
+                                                "x_id": {
+                                                    "type": "string",
+                                                    "example": "asjgffawf"
+                                                },
+                                                "x_user_id": {
+                                                    "type": "string",
+                                                    "example": "kjadkagsfka"
+                                                },
+                                                "preferred_sources": {
+                                                    "type": "string",
+                                                    "example": "TechCrunch,BBC"
+                                                },
+                                                "preferred_categories": {
+                                                    "type": "string",
+                                                    "example": "tech,politics"
+                                                },
+                                                "preferred_authors": {
+                                                    "type": "string",
+                                                    "example": "Jane Doe,John Smith"
+                                                }
+                                            },
+                                            "type": "object",
+                                            "nullable": true
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User not authenticated"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Preferences"
+                ],
+                "summary": "Store or update user preferences",
+                "description": "Creates or updates the authenticated user's preferences, clearing relevant Redis caches. Each preference field is a comma-separated string, where individual values should match existing records in the articles table (sources, categories, authors).",
+                "operationId": "e524a1863fe3fc97946c79487476ad18",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "preferred_sources": {
+                                        "description": "Comma-separated list of preferred news sources. Each source must exist in the 'source' column of the articles table.",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "TechCrunch,BBC",
+                                        "nullable": true
+                                    },
+                                    "preferred_categories": {
+                                        "description": "Comma-separated list of preferred categories. Each category must exist in the 'category' column of the articles table.",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "tech,politics",
+                                        "nullable": true
+                                    },
+                                    "preferred_authors": {
+                                        "description": "Comma-separated list of preferred authors. Each author must exist in the 'author' column of the articles table.",
+                                        "type": "string",
+                                        "maxLength": 255,
+                                        "example": "Jane Doe,John Smith",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Preferences updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Preferences updated successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "preferred_sources": {
+                                                    "type": "string",
+                                                    "example": "TechCrunch,BBC"
+                                                },
+                                                "preferred_categories": {
+                                                    "type": "string",
+                                                    "example": "tech,politics"
+                                                },
+                                                "preferred_authors": {
+                                                    "type": "string",
+                                                    "example": "Jane Doe,John Smith"
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "example": "2025-02-23T12:00:00.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "example": "2025-02-23T12:00:00.000000Z"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized: Invalid or expired token."
+                                        },
+                                        "data": {
+                                            "type": "null",
+                                            "example": null
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "preferred_sources": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The preferred_sources must be a string."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 422
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/feed": {
+            "get": {
+                "tags": [
+                    "Feed"
+                ],
+                "summary": "Retrieve personalized news feed",
+                "description": "Returns a paginated list of articles based on the authenticated user's preferences, cached for 15 minutes.",
+                "operationId": "df065ee0303621380a9a63eb8ac8a98f",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Number of articles per page",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10,
+                            "example": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Personalized feed retrieved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Personalized feed retrieved successfully"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "provider": {
+                                                                "type": "string",
+                                                                "example": "NewsData.Io"
+                                                            },
+                                                            "category": {
+                                                                "type": "string",
+                                                                "example": "sports"
+                                                            },
+                                                            "source": {
+                                                                "type": "string",
+                                                                "example": "Yahoo! News"
+                                                            },
+                                                            "title": {
+                                                                "type": "string",
+                                                                "example": "Nicole Kidman Believes Gender Parity in Hollywood Only Comes From ‘Actually Being in the Films of Women’"
+                                                            },
+                                                            "content": {
+                                                                "type": "string",
+                                                                "example": "ONLY AVAILABLE IN PAID PLANS"
+                                                            },
+                                                            "summary": {
+                                                                "type": "string",
+                                                                "example": "In 2017, Kidman vowed to work with a female director every 18 months and has since exceeded that quota."
+                                                            },
+                                                            "author": {
+                                                                "type": "string",
+                                                                "example": "Indiewire"
+                                                            },
+                                                            "article_url": {
+                                                                "type": "string",
+                                                                "example": "https://ca.news.yahoo.com/nicole-kidman-believes-gender-parity-200000063.html"
+                                                            },
+                                                            "image_url": {
+                                                                "type": "string",
+                                                                "example": "https://s.yimg.com/ny/api/res/1.2/WW.4xO2adhm6X4hilegfNw--/YXBwaWQ9aGlnaGxhbmRlcjt3PTEyMDA7aD04MDA-/https://media.zenfs.com/en/indiewire_268/d931154b95d796643ddcc2033b241986"
+                                                            },
+                                                            "published_at": {
+                                                                "type": "string",
+                                                                "example": "2025-02-22"
+                                                            },
+                                                            "x_id": {
+                                                                "type": "string",
+                                                                "example": "G0XAW57BqoDY"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "first_page_url": {
+                                                    "type": "string",
+                                                    "example": "http://127.0.0.1:8000/api/feed?page=1"
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page_url": {
+                                                    "type": "string",
+                                                    "example": "http://127.0.0.1:8000/api/feed?page=1"
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": "string",
+                                                                "example": "http://127.0.0.1:8000/api/feed?page=1",
+                                                                "nullable": true
+                                                            },
+                                                            "label": {
+                                                                "type": "string",
+                                                                "example": "1"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "next_page_url": {
+                                                    "type": "string",
+                                                    "example": null
+                                                },
+                                                "path": {
+                                                    "type": "string",
+                                                    "example": "http://127.0.0.1:8000/api/feed"
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "prev_page_url": {
+                                                    "type": "string",
+                                                    "example": null
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "No preferences set",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No preferences set. Please set preferences first."
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 400
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized: Invalid or expired token."
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 401
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "sanctum": {
+                "type": "apiKey",
+                "description": "Enter token in format (Bearer <token>)",
+                "name": "Authorization",
+                "in": "header"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Articles",
+            "description": "Operations related to user preferences and news feeds"
+        },
+        {
+            "name": "Preferences",
+            "description": "Operations related to user preferences and news feeds"
+        },
+        {
+            "name": "Authentication",
+            "description": "Authentication"
+        },
+        {
+            "name": "Feed",
+            "description": "Feed"
+        }
+    ]
+}
