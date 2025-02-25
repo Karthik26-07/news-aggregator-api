@@ -38,11 +38,17 @@ services:
 
   db_test:
     image: mysql:8
+    container_name: laravel_mysql_test
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: laravel_test
       MYSQL_USER: test_user
       MYSQL_PASSWORD: test_password
+    ports:
+      - "3307:3306"  # Using a different port to avoid conflicts
+    networks:
+      - laravel_network  # This was missing
 
 networks:
   laravel_network:

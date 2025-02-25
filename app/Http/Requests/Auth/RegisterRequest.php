@@ -35,7 +35,7 @@ class RegisterRequest extends FormRequest
             'email.required' => 'Email is required',
             'email.email' => 'Invalid email format',
             'password.required' => 'Password is required',
-            'password.min' => 'Password must be at least 6 characters long',
+            'password.min' => 'Password must be at least 8 characters long',
         ];
     }
 }

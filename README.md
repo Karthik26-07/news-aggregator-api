@@ -1,66 +1,257 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# News Aggregator API - Docker and Manual Setup
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Overview
 
-## About Laravel
+This project is a **news aggregator API** that collects and stores news data from multiple sources, including:
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+-   [The Guardian API](https://content.guardianapis.com)
+-   [NewsData API](https://newsdata.io/api/1/)
+-   [NewsAPI](https://newsapi.org/v2/everything)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+The API includes a **scheduler** that fetches news data **every hour**, allowing users to:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+-   Set preferences for personalized news
+-   Retrieve relevant news feeds
+-   Search for articles using filters
 
-## Learning Laravel
+## Prerequisites
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Ensure your system has the following installed:
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+-   [Docker](https://www.docker.com/)
+-   [Docker Compose](https://docs.docker.com/compose/install/)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Installation and Setup
 
-## Laravel Sponsors
+Follow these steps to set up and run the **News Aggregator API** inside a **Docker** container:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 1. Clone the Repository
 
-### Premium Partners
+```sh
+git clone https://github.com/Karthik26-07/news-aggregator-api.git
+cd news-aggregator-api
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### 2. Copy the Environment File
+
+```sh
+cp .env.example .env
+```
+
+**Note**: Update `.env` with your API keys for The Guardian, NewsData, and NewsAPI.
+
+### 3. Configure Database and Credentials
+
+The project uses a Docker test database image for development purposes. Configure your database settings in the `.env` file:
+
+```
+DB_CONNECTION=mysql
+DB_HOST=db
+DB_PORT=3306
+DB_DATABASE=news_aggregator
+DB_USERNAME=news_user
+DB_PASSWORD=news_password
+
+# News API Credentials
+GUARDIAN_API_KEY=your_guardian_api_key
+NEWSDATA_API_KEY=your_newsdata_api_key
+NEWSAPI_API_KEY=your_newsapi_api_key
+
+# Cache and Queue Settings
+CACHE_DRIVER=redis
+QUEUE_CONNECTION=redis
+REDIS_HOST=redis
+REDIS_PORT=6379
+```
+
+For testing purposes, you can use the included database image without additional configuration. The database will be automatically created when you start the containers.
+
+### 4. Build and Start Docker Containers
+
+```sh
+docker-compose up -d --build
+```
+
+### 5. Run Migrations and Seed the Database
+
+```sh
+docker exec -it app-container-name php artisan migrate --seed
+```
+
+### 6. Schedule News Fetching
+
+Ensure the scheduler runs correctly:
+
+```sh
+docker exec -it app-container-name php artisan schedule:work
+```
+
+### 7. Access the API
+
+Once running, access the API via:
+
+-   Base URL: http://localhost
+-   API Documentation: http://localhost/api/docs-json
+
+### 8. Stop the Containers
+
+To stop and remove the containers, run:
+
+```sh
+docker-compose down
+```
+
+## Running Tests
+
+The application includes feature tests to verify the functionality of the API endpoints. To run the tests:
+
+### With Docker:
+
+```sh
+# Run all feature tests
+docker exec -it app-container-name php artisan test --testsuite=Feature
+
+# Run a specific test file
+docker exec -it app-container-name php artisan test --filter=NewsApiTest
+```
+
+### Without Docker:
+
+```sh
+# Run all feature tests
+php artisan test --testsuite=Feature
+
+# Run a specific test file
+php artisan test --filter=NewsApiTest
+```
+
+The test environment uses an in-memory SQLite database by default. Make sure your `.env.testing` file is properly configured with test db credentials:
+
+```
+DB_CONNECTION=mysql
+DB_HOST=db
+DB_PORT=3306
+DB_DATABASE=news_aggregator
+DB_USERNAME=news_user
+DB_PASSWORD=news_password
+
+# Test API keys (can be mock values for testing)
+GUARDIAN_API_KEY=test_key
+NEWSDATA_API_KEY=test_key
+NEWSAPI_API_KEY=test_key
+```
+
+## Manual Setup (Without Docker)
+
+If you prefer to set up the project without Docker, follow these steps:
+
+### 1. Prerequisites
+
+Ensure you have the following installed on your system:
+
+-   PHP 8.1 or higher
+-   Composer
+-   MySQL 5.7 or higher
+-   Redis (for caching and queues)
+
+### 2. Clone the Repository
+
+```sh
+git clone https://github.com/Karthik26-07/news-aggregator-api.git
+cd news-aggregator-api
+```
+
+### 3. Install PHP Dependencies
+
+```sh
+composer install
+```
+
+### 4. Copy the Environment File
+
+```sh
+cp .env.example .env
+```
+
+### 5. Configure Environment Variables
+
+Edit the `.env` file and update the following variables:
+
+```
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=news_aggregator
+DB_USERNAME=your_database_username
+DB_PASSWORD=your_database_password
+
+# News API Credentials
+GUARDIAN_API_KEY=your_guardian_api_key
+NEWSDATA_API_KEY=your_newsdata_api_key
+NEWSAPI_API_KEY=your_newsapi_api_key
+
+# Cache and Queue Settings
+CACHE_DRIVER=redis
+QUEUE_CONNECTION=redis
+REDIS_HOST=127.0.0.1
+REDIS_PORT=6379
+```
+
+### 6. Generate Application Key
+
+```sh
+php artisan key:generate
+```
+
+### 7. Run Migrations and Seed the Database
+
+```sh
+php artisan migrate --seed
+```
+
+### 9. Start the Development Server
+
+```sh
+php artisan serve
+```
+
+### 10. Run the Scheduler for News Fetching
+
+Open a new terminal and run:
+
+```sh
+php artisan schedule:work
+```
+
+### 11. Run Queue Worker (for background jobs)
+
+Open a new terminal and run:
+
+```sh
+php artisan queue:work
+```
+
+### 12. Access the API
+
+Once running, access the API via:
+
+-   Base URL: http://localhost:8000
+-   API Documentation: http://localhost:8000/api/docs-json
+
+## Additional Commands
+
+If you need to restart the containers after stopping:
+
+```sh
+docker-compose up -d
+```
+
+To check logs:
+
+```sh
+docker logs -f app-container-name
+```
 
 ## Contributing
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+🚀 Your News Aggregator API is now up and running!

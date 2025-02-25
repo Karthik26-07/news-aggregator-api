@@ -381,6 +381,9 @@ class AuthController extends Controller
         if (!$user) {
             return $this->errorResponse('No user found with this email address.', 404);
         }
+        if (!$user->hasVerifiedEmail()) {
+            return $this->errorResponse('Please verify your email address to reset password.', 403);
+        }
         $status = Password::sendResetLink($request->only('email'));
         return $this->successResponse(
             ['status' => __($status), 'email' => $request->email],

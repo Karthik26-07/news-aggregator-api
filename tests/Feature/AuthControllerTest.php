@@ -14,15 +14,6 @@ use Tests\TestCase;
 class AuthControllerTest extends TestCase
 {
     use RefreshDatabase;
-    /**
-     * A basic feature test example.
-     */
-    public function test_example(): void
-    {
-        $response = $this->get('/');
-
-        $response->assertStatus(200);
-    }
 
     /**
      * Test successful user registration.
@@ -89,43 +80,44 @@ class AuthControllerTest extends TestCase
      *
      * @return void
      */
-    // public function test_register_fails_with_invalid_data()
-    // {
-    //     // Arrange: Invalid data (missing required fields, mismatched passwords)
-    //     $invalidData = [
-    //         'name' => 'John Doe',
-    //         'email' => 'john@example.com',
-    //         'password' => 'karthik@1234', // Too short
-    //         'password_confirmation' => 'different',
-    //     ];
+    public function test_register_fails_with_invalid_data()
+    {
+        // Arrange: Invalid data (missing required fields, mismatched passwords)
+        $invalidData = [
+            'name' => '',
+            'email' => 'john@example.com',
+            'password' => 'karth', // Too short
+        ];
 
-    //     // Act: Make the POST request
-    //     $response = $this->postJson('/api/register', $invalidData);
+        // Act: Make the POST request
+        $response = $this->postJson('/api/register', $invalidData);
 
-    //     // Assert: Check the validation error response
-    //     $response->assertStatus(422)
-    //         ->assertJsonStructure([
-    //             'success',
-    //             'message',
-    //             'data' => [
-    //                 'password',
-    //             ],
-    //             'status',
-    //         ])
-    //         ->assertJson([
-    //             'success' => false,
-    //             'message' => 'Validation failed',
-    //             'status' => 422,
-    //         ])
-    //         ->assertJsonFragment([
-    //             'password' => ['The password field must be at least 8 characters.', 'The password field confirmation does not match.'],
-    //         ]);
+        // Assert: Check the validation error response
+        $response->assertStatus(422)
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'data' => [
+                    'name',
+                    'password'
+                ],
+                'status',
+            ])
+            ->assertJson([
+                'success' => false,
+                'message' => 'Validation failed',
+                'status' => 422,
+            ])
+            ->assertJsonFragment(data: [
+                'name' => ['Name is required'],
+                'password' => ['Password must be at least 8 characters long']
+            ]);
 
-    //     // Assert: No user was created
-    //     $this->assertDatabaseMissing('users', [
-    //         'email' => 'john@example.com',
-    //     ]);
-    // }
+        // Assert: No user was created
+        $this->assertDatabaseMissing('users', [
+            'email' => 'john@example.com',
+        ]);
+    }
 
     /**
      * Test registration fails with duplicate email.
@@ -163,7 +155,7 @@ class AuthControllerTest extends TestCase
         $this->assertEquals(1, User::count());
     }
 
-    public function test_verify_email()
+    public function test_verify_registered_email()
     {
         $user = User::factory()->create([
             'email_verified_at' => null,
@@ -177,9 +169,9 @@ class AuthControllerTest extends TestCase
         $this->assertNotNull($user->fresh()->email_verified_at);
     }
 
-    public function test_login_user()
+    public function test_login_user_return_access_token()
     {
-        $user = User::factory()->create([
+        User::factory()->create([
             'email' => 'user@gmail.com',
             'password' => 'password123',
             'email_verified_at' => now(),
@@ -204,6 +196,56 @@ class AuthControllerTest extends TestCase
                     'success' => true,
                     'message' => 'Login successful',
                     'status' => 200
+                ]);
+    }
+
+    public function test_login_fails_with_invalid_credentials()
+    {
+        User::factory()->create([
+            'email' => 'user@gmail.com',
+            'password' => 'password123',
+            'email_verified_at' => now(),
+        ]);
+
+        $response = $this->postJson('/api/login', [
+            'email' => 'user@gmail.com',
+            'password' => 'password567',
+        ]);
+
+        $response->assertStatus(401)
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'status',
+            ])->assertJson([
+                    'success' => false,
+                    'message' => 'The provided credentials are incorrect.',
+                    'status' => 401
+                ]);
+    }
+
+    public function test_login_fails_with_unverified_email()
+    {
+        User::factory()->create([
+            'email' => 'user1234@gmail.com',
+            'password' => 'password123',
+            'email_verified_at' => null
+        ]);
+
+        $response = $this->postJson('/api/login', [
+            'email' => 'user1234@gmail.com',
+            'password' => 'password123',
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'status',
+            ])->assertJson([
+                    'success' => false,
+                    'message' => 'Please verify your email address before logging in.',
+                    'status' => 403
                 ]);
     }
 
@@ -238,7 +280,39 @@ class AuthControllerTest extends TestCase
             ]);
     }
 
-    public function test_reset_password()
+    public function test_send_password_reset_link_fails_with_unknown_email()
+    {
+        User::factory()->create(['email' => 'user1234@gmail.com']);
+
+        $response = $this->postJson('/api/password/email', [
+            'email' => 'user90@gmail.com',
+        ]);
+
+        $response->assertStatus(404)
+            ->assertJson([
+                'success' => false,
+                'message' => 'No user found with this email address.',
+                'status' => 404
+            ]);
+    }
+
+    public function test_password_reset_link_fails_with_unverified_email()
+    {
+        $user = User::factory()->create(['email_verified_at' => null]);
+
+        $response = $this->postJson('/api/password/email', [
+            'email' => $user->email,
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Please verify your email address to reset password.',
+                'status' => 403
+            ]);
+    }
+
+    public function test_reset_password_success()
     {
         $user = User::factory()->create();
         $token = Password::createToken($user);
@@ -254,6 +328,93 @@ class AuthControllerTest extends TestCase
             ->assertJson([
                 'success' => true,
                 'message' => 'Password reset successfully',
+            ]);
+    }
+
+    public function test_reset_password_fails_with_unknown_email()
+    {
+        $user = User::factory()->create(['email' => 'user123@gmail.com']);
+        $token = Password::createToken($user);
+
+        $response = $this->postJson('/api/password/reset', [
+            'email' => 'user45@gmail.com',
+            'token' => $token,
+            'password' => 'newpassword123',
+            'password_confirmation' => 'newpassword123',
+        ]);
+
+        $response->assertStatus(400)
+            ->assertJson([
+                'success' => false,
+                'message' => "We can't find a user with that email address.",
+                'status' => 400
+            ]);
+    }
+    // public function test_reset_password_fails_with_password_mismatch()
+    // {
+    //     $user = User::factory()->create();
+    //     $token = Password::createToken($user);
+
+    //     $response = $this->postJson('/api/password/reset', [
+    //         'email' => $user->email,
+    //         'token' => $token,
+    //         'password' => 'newpassword1234',
+    //         'password_confirmation' => 'newpassword12345',
+    //     ]);
+
+    //     $response->assertStatus(422)
+    //         ->assertJson([
+    //             'success' => false,
+    //             'message' => "Validation failed",
+    //             'status' => 422,
+    //             'data' => ['password' => ['The password confirmation does not match.']]
+    //         ]);
+    // }
+
+    public function test_reset_password_fails_with_invalid_data()
+    {
+        $response = $this->postJson('/api/password/reset', [
+            'email' => 'user21.com',
+            'token' => '',
+            'password' => 'newpa',
+            'password_confirmation' => 'newpassword12345',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonStructure([
+                'success',
+                'message',
+                'status',
+                'data' => [
+                    'token',
+                    'email',
+                    'password'
+                ]
+            ])
+            ->assertJson([
+                'success' => false,
+                'message' => "Validation failed",
+                'status' => 422,
+            ]);
+    }
+
+    public function test_password_reset_fails_with_invalid_token()
+    {
+        $user = User::factory()->create();
+        Password::createToken($user);
+
+        $response = $this->postJson('/api/password/reset', [
+            'email' => $user->email,
+            'token' => 'ewwww',
+            'password' => 'newpassword123',
+            'password_confirmation' => 'newpassword123',
+        ]);
+
+        $response->assertStatus(400)
+            ->assertJson([
+                'success' => false,
+                'message' => "This password reset token is invalid.",
+                'status' => 400
             ]);
     }
 }
