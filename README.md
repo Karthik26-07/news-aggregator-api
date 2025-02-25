@@ -4,9 +4,9 @@
 
 This project is a **news aggregator API** that collects and stores news data from multiple sources, including:
 
--   [The Guardian API](https://content.guardianapis.com)
--   [NewsData API](https://newsdata.io/api/1/)
--   [NewsAPI](https://newsapi.org/v2/everything)
+-   [The Guardian API](https://open-platform.theguardian.com)
+-   [NewsData API](https://newsdata.io)
+-   [NewsAPI](https://newsapi.org)
 
 The API includes a **scheduler** that fetches news data **every hour**, allowing users to:
 
@@ -42,7 +42,7 @@ cp .env.example .env
 
 ### 3. Configure Database and Credentials
 
-The project uses a Docker test database image for development purposes. Configure your database settings in the `.env` file:
+The project uses a Docker test database image for testing purposes. Configure your database settings in the `.env` file or else you can use it for dev too , but it clears data on docker stops:
 
 ```
 DB_CONNECTION=mysql
@@ -72,28 +72,20 @@ For testing purposes, you can use the included database image without additional
 docker-compose up -d --build
 ```
 
-### 5. Run Migrations and Seed the Database
+### 5. Run Database Migrations
 
 ```sh
-docker exec -it app-container-name php artisan migrate --seed
+docker exec -it laravel_app php artisan migrate
 ```
 
-### 6. Schedule News Fetching
-
-Ensure the scheduler runs correctly:
-
-```sh
-docker exec -it app-container-name php artisan schedule:work
-```
-
-### 7. Access the API
+### 6. Access the API
 
 Once running, access the API via:
 
 -   Base URL: http://localhost
 -   API Documentation: http://localhost/api/docs-json
 
-### 8. Stop the Containers
+### 7. Stop the Containers
 
 To stop and remove the containers, run:
 
@@ -109,10 +101,10 @@ The application includes feature tests to verify the functionality of the API en
 
 ```sh
 # Run all feature tests
-docker exec -it app-container-name php artisan test --testsuite=Feature
+docker exec -it laravel_app php artisan test --testsuite=Feature
 
 # Run a specific test file
-docker exec -it app-container-name php artisan test --filter=NewsApiTest
+docker exec -it laravel_app php artisan test --filter=NewsApiTest
 ```
 
 ### Without Docker:
@@ -149,9 +141,9 @@ If you prefer to set up the project without Docker, follow these steps:
 
 Ensure you have the following installed on your system:
 
--   PHP 8.1 or higher
+-   PHP 8.2 or higher
 -   Composer
--   MySQL 5.7 or higher
+-   MySQL 8
 -   Redis (for caching and queues)
 
 ### 2. Clone the Repository
@@ -206,7 +198,7 @@ php artisan key:generate
 ### 7. Run Migrations and Seed the Database
 
 ```sh
-php artisan migrate --seed
+php artisan migrate
 ```
 
 ### 9. Start the Development Server
@@ -249,7 +241,7 @@ docker-compose up -d
 To check logs:
 
 ```sh
-docker logs -f app-container-name
+docker logs -f laravel_app
 ```
 
 ## Contributing
