@@ -3,13 +3,13 @@
 return [
     'default' => 'default',
     'documentations' => [
+
         'default' => [
             'api' => [
                 'title' => 'News Aggregator API',
                 'version' => '1.0.0',
                 'description' => 'A RESTful API for managing news articles and user preferences, built with Laravel 11, Sanctum authentication, Redis caching, and rate limiting (60 requests/minute per IP).',
             ],
-
             'routes' => [
                 /*
                  * Route for accessing api documentation interface
@@ -20,7 +20,7 @@ return [
                 /*
                  * Edit to include full URL in ui for assets
                  */
-                'use_absolute_path' => env('L5_SWAGGER_USE_ABSOLUTE_PATH', true),
+                'use_absolute_path' => env('L5_SWAGGER_USE_ABSOLUTE_PATH', false),
 
                 /*
                  * Edit to set path where swagger ui assets should be stored

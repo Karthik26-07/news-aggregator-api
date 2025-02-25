@@ -706,6 +706,64 @@
                 }
             }
         },
+        "/api/email/verify/{id}/{hash}": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify the user's email",
+                "description": "Verifies the user's email address using an ID and hash from an email verification link. Returns an HTML view instead of a JSON response, unlike other API endpoints. Redirects to this endpoint occur after registration.",
+                "operationId": "4af257178d5a9abf76c64c62e3a677cb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "The ID of the user to verify",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "hash",
+                        "in": "path",
+                        "description": "The SHA1 hash of the user's email, used for verification",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "random_hash_value"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Email verification view",
+                        "content": {
+                            "text/html": {
+                                "schema": {
+                                    "description": "HTML response indicating verification success or failure",
+                                    "type": "string",
+                                    "example": "<html><body><h1>Email Verified</h1><p>Your email has been successfully verified.</p></body></html>"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "text/html": {
+                                "schema": {
+                                    "description": "HTML response if the user ID is invalid",
+                                    "type": "string",
+                                    "example": "<html><body><p>Email verification failed. The link may be invalid or expired.</p><p>Please try registering again or contact support.</p></body></html>"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/login": {
             "post": {
                 "tags": [
@@ -851,10 +909,6 @@
                                             "type": "string",
                                             "example": "Logged out successfully"
                                         },
-                                        "data": {
-                                            "type": "null",
-                                            "example": null
-                                        },
                                         "status": {
                                             "type": "integer",
                                             "example": 200
@@ -879,10 +933,6 @@
                                             "type": "string",
                                             "example": "User not authenticated"
                                         },
-                                        "data": {
-                                            "type": "null",
-                                            "example": null
-                                        },
                                         "status": {
                                             "type": "integer",
                                             "example": 401
@@ -901,14 +951,14 @@
                 ]
             }
         },
-        "/api/password/reset": {
+        "/api/password/email": {
             "post": {
                 "tags": [
                     "Authentication"
                 ],
-                "summary": "Generate a password reset token",
+                "summary": "Send password reset email",
                 "description": "This endpoint generates a password reset token for a given email address. The token can be used to reset the user's password.",
-                "operationId": "afa7f78e76943c35ac29f5ad58681110",
+                "operationId": "2a9b95348b4ddf980b0ebd9ea46571b8",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -1022,6 +1072,142 @@
                                                 }
                                             },
                                             "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/password/reset": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Reset the user's password",
+                "description": "Resets the user's password using a token received from a password reset link. Does not require Sanctum authentication.",
+                "operationId": "5f9daa4e2d9a09acda465d6b8455a1cd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "email": {
+                                        "description": "The user's email address",
+                                        "type": "string",
+                                        "example": "john@example.com"
+                                    },
+                                    "token": {
+                                        "description": "The password reset token received via email",
+                                        "type": "string",
+                                        "example": "random_reset_token"
+                                    },
+                                    "password": {
+                                        "description": "The new password (min 8 characters)",
+                                        "type": "string",
+                                        "example": "newpassword123"
+                                    },
+                                    "password_confirmation": {
+                                        "description": "Must match the new password",
+                                        "type": "string",
+                                        "example": "newpassword123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password reset successfully"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid token or credentials",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "description": "Possible messages: 'passwords.token' (invalid token), 'passwords.user' (user not found)",
+                                            "type": "string",
+                                            "example": "passwords.token"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 400
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Validation failed"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "email": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The email field is required."
+                                                    }
+                                                },
+                                                "token": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "The token field is required."
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 422
                                         }
                                     },
                                     "type": "object"

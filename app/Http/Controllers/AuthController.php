@@ -46,7 +46,7 @@ class AuthController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=201,
+     *         response=200,
      *         description="User registered successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
@@ -144,12 +144,56 @@ class AuthController extends Controller
                 'token_type' => 'Bearer',
                 'user' => $user
             ],
-            'User registered successfully. Please verify your email to log in.',
-            201
+            'User registered successfully. Please verify your email to log in.'
         );
     }
 
-    /** verify the email */
+    /**
+     * @OA\Get(
+     *     path="/api/email/verify/{id}/{hash}",
+     *     summary="Verify the user's email",
+     *     description="Verifies the user's email address using an ID and hash from an email verification link. Returns an HTML view instead of a JSON response, unlike other API endpoints. Redirects to this endpoint occur after registration.",
+     *     tags={"Authentication"},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="The ID of the user to verify",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="hash",
+     *         in="path",
+     *         description="The SHA1 hash of the user's email, used for verification",
+     *         required=true,
+     *         @OA\Schema(type="string", example="random_hash_value")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Email verification view",
+     *         @OA\MediaType(
+     *             mediaType="text/html",
+     *             @OA\Schema(
+     *                 type="string",
+     *                 example="<html><body><h1>Email Verified</h1><p>Your email has been successfully verified.</p></body></html>",
+     *                 description="HTML response indicating verification success or failure"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found",
+     *         @OA\MediaType(
+     *             mediaType="text/html",
+     *             @OA\Schema(
+     *                 type="string",
+     *                 example="<html><body><p>Email verification failed. The link may be invalid or expired.</p><p>Please try registering again or contact support.</p></body></html>",
+     *                 description="HTML response if the user ID is invalid"
+     *             )
+     *         )
+     *     )
+     * )
+     */
 
     public function verifyEmail(Request $request, $id, $hash)
     {
@@ -283,8 +327,8 @@ class AuthController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/password/reset",
-     *     summary="Generate a password reset token",
+     *     path="/api/password/email",
+     *     summary="Send password reset email",
      *     description="This endpoint generates a password reset token for a given email address. The token can be used to reset the user's password.",
      *     tags={"Authentication"},
      *     @OA\RequestBody(
@@ -338,8 +382,6 @@ class AuthController extends Controller
             return $this->errorResponse('No user found with this email address.', 404);
         }
         $status = Password::sendResetLink($request->only('email'));
-        Password::broker()->createToken($user);
-
         return $this->successResponse(
             ['status' => __($status), 'email' => $request->email],
             'Password reset token generated. Use this token to reset your password.'
@@ -348,7 +390,62 @@ class AuthController extends Controller
 
 
     /**
-     * Reset the user’s password using the provided token.
+     * @OA\Post(
+     *     path="/api/password/reset",
+     *     summary="Reset the user's password",
+     *     description="Resets the user's password using a token received from a password reset link. Does not require Sanctum authentication.",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="email", type="string", example="john@example.com", description="The user's email address"),
+     *             @OA\Property(property="token", type="string", example="random_reset_token", description="The password reset token received via email"),
+     *             @OA\Property(property="password", type="string", example="newpassword123", description="The new password (min 8 characters)"),
+     *             @OA\Property(property="password_confirmation", type="string", example="newpassword123", description="Must match the new password")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Password reset successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Password reset successfully"),
+     *             @OA\Property(property="status", type="integer", example=200)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Invalid token or credentials",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="passwords.token", description="Possible messages: 'passwords.token' (invalid token), 'passwords.user' (user not found)"),
+     *             @OA\Property(property="status", type="integer", example=400)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation failed",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation failed"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="email",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="The email field is required.")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="token",
+     *                     type="array",
+     *                     @OA\Items(type="string", example="The token field is required.")
+     *                 )
+     *             ),
+     *             @OA\Property(property="status", type="integer", example=422)
+     *         )
+     *     )
+     * )
      */
     public function resetPassword(ResetPasswordRequest $request)
     {
