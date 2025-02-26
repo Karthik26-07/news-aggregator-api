@@ -20,7 +20,7 @@ class ArticlesControllerTest extends TestCase
         Sanctum::actingAs($user);
     }
 
-    public function it_can_retrieve_a_list_of_articles()
+    public function test_it_can_retrieve_a_list_of_articles()
     {
 
         Article::factory()->count(15)->create();
@@ -59,7 +59,7 @@ class ArticlesControllerTest extends TestCase
 
     }
 
-    public function it_returns_empty_list_when_no_articles_found()
+    public function test_it_returns_empty_list_when_no_articles_found()
     {
         $response = $this->getJson('/api/articles?keyword=nonexistent');
 
@@ -80,7 +80,7 @@ class ArticlesControllerTest extends TestCase
             ])->assertJson(['success' => true, 'message' => 'Articles retrieved successfully', 'status' => 200]);
     }
 
-    public function it_can_retrieve_a_single_article()
+    public function test_it_can_retrieve_a_single_article()
     {
         $article = Article::factory()->create();
         $hashedId = Common::hashId($article->id);
@@ -113,7 +113,7 @@ class ArticlesControllerTest extends TestCase
     }
 
 
-    public function it_returns_error_when_article_id_is_missing()
+    public function test_it_returns_error_when_article_id_is_missing()
     {
 
         $response = $this->getJson('/api/article');
@@ -126,7 +126,7 @@ class ArticlesControllerTest extends TestCase
             ]);
     }
 
-    public function it_returns_error_for_invalid_article_id()
+    public function test_it_returns_error_for_invalid_article_id()
     {
 
         $response = $this->getJson('/api/article?hashed_id=invalid_id');

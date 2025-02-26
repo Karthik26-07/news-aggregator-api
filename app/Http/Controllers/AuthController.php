@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\PasswordResetLinkRequest;
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\Auth\ResendEmailVerify;
 use App\Http\Requests\Auth\ResetPasswordRequest;
 use App\Models\User;
 use App\Traits\ApiResponse;
 use Exception;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
@@ -64,7 +66,7 @@ class AuthController extends Controller
      *                     @OA\Property(property="email", type="string", example="john@example.com"),
      *                 )
      *             ),
-     *             @OA\Property(property="status", type="integer", example=201)
+     *             @OA\Property(property="status", type="integer", example=200)
      *         )
      *     ),
      *     @OA\Response(
@@ -73,7 +75,6 @@ class AuthController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Bad request"),
-     *             @OA\Property(property="data", type="null", example=null),
      *             @OA\Property(property="status", type="integer", example=400)
      *         )
      *     ),
@@ -109,16 +110,6 @@ class AuthController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=429,
-     *         description="Too Many Requests",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Too many requests. Please try again later."),
-     *             @OA\Property(property="data", type="null", example=null),
-     *             @OA\Property(property="status", type="integer", example=429)
-     *         )
-     *     ),
-     *     @OA\Response(
      *         response=500,
      *         description="Server error",
      *         @OA\JsonContent(
@@ -148,52 +139,52 @@ class AuthController extends Controller
         );
     }
 
-    /**
-     * @OA\Get(
-     *     path="/api/email/verify/{id}/{hash}",
-     *     summary="Verify the user's email",
-     *     description="Verifies the user's email address using an ID and hash from an email verification link. Returns an HTML view instead of a JSON response, unlike other API endpoints. Redirects to this endpoint occur after registration.",
-     *     tags={"Authentication"},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="The ID of the user to verify",
-     *         required=true,
-     *         @OA\Schema(type="integer", example=1)
-     *     ),
-     *     @OA\Parameter(
-     *         name="hash",
-     *         in="path",
-     *         description="The SHA1 hash of the user's email, used for verification",
-     *         required=true,
-     *         @OA\Schema(type="string", example="random_hash_value")
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Email verification view",
-     *         @OA\MediaType(
-     *             mediaType="text/html",
-     *             @OA\Schema(
-     *                 type="string",
-     *                 example="<html><body><h1>Email Verified</h1><p>Your email has been successfully verified.</p></body></html>",
-     *                 description="HTML response indicating verification success or failure"
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="User not found",
-     *         @OA\MediaType(
-     *             mediaType="text/html",
-     *             @OA\Schema(
-     *                 type="string",
-     *                 example="<html><body><p>Email verification failed. The link may be invalid or expired.</p><p>Please try registering again or contact support.</p></body></html>",
-     *                 description="HTML response if the user ID is invalid"
-     *             )
-     *         )
-     *     )
-     * )
-     */
+    // /**
+    //  * @OA\Get(
+    //  *     path="/api/email/verify/{id}/{hash}",
+    //  *     summary="Verify the user's email",
+    //  *     description="Verifies the user's email address using an ID and hash from an email verification link. Returns an HTML view instead of a JSON response, unlike other API endpoints. Redirects to this endpoint occur after registration.",
+    //  *     tags={"Authentication"},
+    //  *     @OA\Parameter(
+    //  *         name="id",
+    //  *         in="path",
+    //  *         description="The ID of the user to verify",
+    //  *         required=true,
+    //  *         @OA\Schema(type="integer", example=1)
+    //  *     ),
+    //  *     @OA\Parameter(
+    //  *         name="hash",
+    //  *         in="path",
+    //  *         description="The SHA1 hash of the user's email, used for verification",
+    //  *         required=true,
+    //  *         @OA\Schema(type="string", example="random_hash_value")
+    //  *     ),
+    //  *     @OA\Response(
+    //  *         response=200,
+    //  *         description="Email verification view",
+    //  *         @OA\MediaType(
+    //  *             mediaType="text/html",
+    //  *             @OA\Schema(
+    //  *                 type="string",
+    //  *                 example="<html><body><h1>Email Verified</h1><p>Your email has been successfully verified.</p></body></html>",
+    //  *                 description="HTML response indicating verification success or failure"
+    //  *             )
+    //  *         )
+    //  *     ),
+    //  *     @OA\Response(
+    //  *         response=404,
+    //  *         description="User not found",
+    //  *         @OA\MediaType(
+    //  *             mediaType="text/html",
+    //  *             @OA\Schema(
+    //  *                 type="string",
+    //  *                 example="<html><body><p>Email verification failed. The link may be invalid or expired.</p><p>Please try registering again or contact support.</p></body></html>",
+    //  *                 description="HTML response if the user ID is invalid"
+    //  *             )
+    //  *         )
+    //  *     )
+    //  * )
+    //  */
 
     public function verifyEmail(Request $request, $id, $hash)
     {
@@ -284,6 +275,77 @@ class AuthController extends Controller
             ],
             'Login successful'
         );
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/email/verification/resend",
+     *     summary="Resend Email Verification Link",
+     *     description="Sends an email verification link to the user's email address.",
+     *     operationId="resendEmailVerifyLink",
+     *     tags={"Authentication"},
+     * 
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email"},
+     *             @OA\Property(property="email", type="string", format="email", example="user@example.com")
+     *         )
+     *     ),
+     * 
+     *     @OA\Response(
+     *         response=200,
+     *         description="Verification link sent successfully.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="integer", example=200),
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Verification link sent successfully."),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="email", type="string", example="user@example.com")
+     *             )
+     *         )
+     *     ),
+     * 
+     *     @OA\Response(
+     *         response=403,
+     *         description="Email address is already verified.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="integer", example=403),
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Email address is already verified.")
+     *         )
+     *     ),
+     * 
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found.",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="status", type="integer", example=404),
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="User not found.")
+     *         )
+     *     )
+     * )
+     */
+
+
+    public function resendVerificationEmail(ResendEmailVerify $request)
+    {
+        $emailAddress = $request->email;
+
+        $user = User::where('email', $emailAddress)
+            ->select(['id', 'password', 'email_verified_at'])
+            ->first();
+
+        if (!$user) {
+            return $this->errorResponse('User not found', 404);
+        }
+        if ($user->hasVerifiedEmail()) {
+            return $this->errorResponse('Email address is already verified.', 403);
+        }
+
+        $user->sendEmailVerificationNotification();
+        return $this->successResponse(['email' => $emailAddress], 'Verification link sent successfully.');
     }
 
     /**

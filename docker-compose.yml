@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   app:
     build:
@@ -46,10 +44,15 @@ services:
       MYSQL_USER: test_user
       MYSQL_PASSWORD: test_password
     ports:
-      - "3307:3306"  # Using a different port to avoid conflicts
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql  # Persist MySQL data
     networks:
-      - laravel_network  # This was missing
+      - laravel_network
 
 networks:
   laravel_network:
     driver: bridge
+
+volumes:
+  mysql_data:  # Named volume for MySQL persistence

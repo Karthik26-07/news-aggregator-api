@@ -550,7 +550,7 @@
                                         },
                                         "status": {
                                             "type": "integer",
-                                            "example": 201
+                                            "example": 200
                                         }
                                     },
                                     "type": "object"
@@ -571,10 +571,6 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Bad request"
-                                        },
-                                        "data": {
-                                            "type": "null",
-                                            "example": null
                                         },
                                         "status": {
                                             "type": "integer",
@@ -647,34 +643,6 @@
                             }
                         }
                     },
-                    "429": {
-                        "description": "Too Many Requests",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Too many requests. Please try again later."
-                                        },
-                                        "data": {
-                                            "type": "null",
-                                            "example": null
-                                        },
-                                        "status": {
-                                            "type": "integer",
-                                            "example": 429
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
                     "500": {
                         "description": "Server error",
                         "content": {
@@ -699,64 +667,6 @@
                                         }
                                     },
                                     "type": "object"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/api/email/verify/{id}/{hash}": {
-            "get": {
-                "tags": [
-                    "Authentication"
-                ],
-                "summary": "Verify the user's email",
-                "description": "Verifies the user's email address using an ID and hash from an email verification link. Returns an HTML view instead of a JSON response, unlike other API endpoints. Redirects to this endpoint occur after registration.",
-                "operationId": "4af257178d5a9abf76c64c62e3a677cb",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "The ID of the user to verify",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    },
-                    {
-                        "name": "hash",
-                        "in": "path",
-                        "description": "The SHA1 hash of the user's email, used for verification",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "example": "random_hash_value"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Email verification view",
-                        "content": {
-                            "text/html": {
-                                "schema": {
-                                    "description": "HTML response indicating verification success or failure",
-                                    "type": "string",
-                                    "example": "<html><body><h1>Email Verified</h1><p>Your email has been successfully verified.</p></body></html>"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "User not found",
-                        "content": {
-                            "text/html": {
-                                "schema": {
-                                    "description": "HTML response if the user ID is invalid",
-                                    "type": "string",
-                                    "example": "<html><body><p>Email verification failed. The link may be invalid or expired.</p><p>Please try registering again or contact support.</p></body></html>"
                                 }
                             }
                         }
@@ -877,6 +787,119 @@
                                         "status": {
                                             "type": "integer",
                                             "example": 403
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/email/verification/resend": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Resend Email Verification Link",
+                "description": "Sends an email verification link to the user's email address.",
+                "operationId": "resendEmailVerifyLink",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Verification link sent successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 200
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Verification link sent successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "user@example.com"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Email address is already verified.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 403
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Email address is already verified."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 404
+                                        },
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "User not found."
                                         }
                                     },
                                     "type": "object"

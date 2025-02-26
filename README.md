@@ -244,6 +244,6 @@ To check logs:
 docker logs -f laravel_app
 ```
 
-## Contributing
+## For Api Documentation
 
-🚀 Your News Aggregator API is now up and running!
+-- [ApiDoc](https://karthik26-07.github.io/news-aggregator-api/)

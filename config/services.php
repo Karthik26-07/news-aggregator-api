@@ -38,6 +38,9 @@ return [
         'news_api_key' => env('NEWS_API_ORG'),
         'news_data_io' => env('NEWS_DATA_IO'),
         'news_the_guardian' => env('NEWS_THE_GUARDIAN')
+    ],
+    'email' => [
+        'send_email' => env('SEND_EMAIL')
     ]
 
 ];

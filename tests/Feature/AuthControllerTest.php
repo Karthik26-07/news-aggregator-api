@@ -4,16 +4,24 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
 
 class AuthControllerTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Clear rate limiter before each test
+    }
 
     /**
      * Test successful user registration.
@@ -74,6 +82,7 @@ class AuthControllerTest extends TestCase
             return $event->user->id === $user->id;
         });
     }
+
 
     /**
      * Test registration fails with invalid data.
@@ -249,6 +258,49 @@ class AuthControllerTest extends TestCase
                 ]);
     }
 
+    public function test_to_many_requests_for_login()
+    {
+
+        User::factory()->create([
+            'email' => 'user@gmail.com',
+            'password' => 'password123',
+            'email_verified_at' => now(),
+        ]);
+
+        for ($i = 0; $i < 2; $i++) {
+            # code...
+            $response = $this->postJson('/api/login', [
+                'email' => 'user@gmail.com',
+                'password' => 'password123',
+            ]);
+
+            $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'success',
+                    'message',
+                    'status',
+                    'data' => [
+                        'access_token',
+                        'token_type',
+                        'expires_at',
+                    ],
+                ])->assertJson([
+                        'success' => true,
+                        'message' => 'Login successful',
+                        'status' => 200
+                    ]);
+        }
+
+        $response = $this->postJson('/api/login', [
+            'email' => 'user@gmail.com',
+            'password' => 'password123',
+        ])->assertJson(value: [
+                    'success' => false,
+                    'message' => 'Too many requests. Please try again later.',
+                    'status' => 429
+                ]);
+
+    }
     public function test_logout_user()
     {
         $user = User::factory()->create();
@@ -415,6 +467,75 @@ class AuthControllerTest extends TestCase
                 'success' => false,
                 'message' => "This password reset token is invalid.",
                 'status' => 400
+            ]);
+    }
+
+    public function test_can_resend_verification_email_to_unverified_user()
+    {
+        // Event::fake();
+
+        $user = User::factory()->unverified()->create();
+
+        $response = $this->postJson('/api/email/verification/resend', [
+            'email' => $user->email
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'message' => 'Verification link sent successfully.',
+                'data' => [
+                    'email' => $user->email
+                ]
+            ]);
+
+        // Event::assertDispatched(Registered::class);
+    }
+
+    public function test_cannot_resend_verification_email_to_verified_user()
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now()
+        ]);
+
+        $response = $this->postJson('/api/email/verification/resend', [
+            'email' => $user->email
+        ]);
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Email address is already verified.',
+                'status' => 403
+            ]);
+    }
+
+    public function test_cannot_resend_verification_email_to_nonexistent_user()
+    {
+        $response = $this->postJson('/api/email/verification/resend', [
+            'email' => 'nonexistent@example.com'
+        ]);
+
+        $response->assertStatus(404);
+    }
+
+    public function test_email_validation_rules_are_enforced()
+    {
+        $response = $this->postJson('/api/email/verification/resend', [
+            'email' => ''
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonStructure([
+                'status',
+                'success',
+                'message',
+                'data' => ['email']
+            ])
+            ->assertJson([
+                'success' => false,
+                'message' => 'Validation failed',
+                'status' => 422
             ]);
     }
 }

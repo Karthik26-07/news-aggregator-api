@@ -3,21 +3,28 @@
 use App\Http\Controllers\ArticlesController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserPreferenceController;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/register', [AuthController::class, 'register']);
 
-Route::middleware('throttle:5,1')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
 
-    Route::post('/password/email', [AuthController::class, 'sendPasswordResetLink']);
-    Route::post('/password/reset', action: [AuthController::class, 'resetPassword'])->name('password.update');
-    Route::get('/password/reset', function () {
-        return view('reset-password'); // Make sure this file exists in resources/views/auth/
-    })->name('password.reset');
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
-    Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify.api');
-});
+Route::post('/password/email', [AuthController::class, 'sendPasswordResetLink'])->middleware('throttle:password-email');
+Route::post('/password/reset', [AuthController::class, 'resetPassword'])
+    ->name('password.update')
+    ->middleware('throttle:password-reset');
+Route::get('/password/reset', function () {
+    return view('reset-password');
+})->name('password.reset')->middleware('throttle:password-reset-view');
+Route::post('/email/verification/resend', [AuthController::class, 'resendVerificationEmail'])
+    ->name('verification.resend')
+    ->middleware('throttle:verification-resend');
+
+Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+    ->name('verification.verify.api')
+    ->middleware('throttle:verification-verify');
 
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
